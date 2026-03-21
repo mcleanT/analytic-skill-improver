@@ -82,7 +82,8 @@ POST-CONVERGENCE
 ├─ 11. Cross-validate on backup dataset
 ├─ 12. Add follow-up signposts (from Bucket C)
 ├─ 12.5. Log toolkit upgrades (from Bucket B)
-└─ 13. Report results
+├─ 13. Report results
+└─ 13.5. Cross-skill consistency check
 ```
 
 ---
@@ -460,6 +461,27 @@ Summarize the improvement trajectory:
 python {benchmark_dir}/compare_versions.py {skill_name}
 ```
 This produces `{benchmark_dir}/runs/{skill_name}/improvement_trajectory.md` with the full metric comparison table.
+
+### Step 13.5: Cross-Skill Consistency Check (MANDATORY)
+
+After the trajectory report, run the consistency checker across all skills:
+
+```bash
+python scripts/check_cross_skill_consistency.py --skill-dir {skill_dir} --shared-dir {skill_dir}/_shared/
+```
+
+If inconsistencies are found:
+- Review the proposed fixes
+- Apply fixes that are correct (auto-fix with confirmation)
+- Skip fixes that need domain-specific judgment (e.g., a skill intentionally uses a non-standard pattern marked with `# raw:`)
+- Re-run the checker to verify clean
+
+This step prevents skill improvements from introducing drift that breaks other skills.
+
+**Shared sub-protocol files**: Skills can use `{{include _shared/X.md}}` markers for
+common documentation blocks (visualization standards, reporting API, imports, correction
+guidance). Use `scripts/expand_skill.py` to inline these markers before dispatching
+benchmark subagents.
 
 ---
 
