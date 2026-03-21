@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Project config (users create their own from example)
+config.yaml
+
+# Benchmark artifacts (can be large)
+benchmarks/runs/
+*.parquet
+*.h5ad
+*.h5
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
