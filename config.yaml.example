@@ -1,0 +1,83 @@
+# Skill Improver — Project Configuration
+# Copy to config.yaml and fill in your project-specific values.
+
+project:
+  name: "My Analysis Project"
+
+  # Where your analysis skill .md files live
+  skill_dir: "skills/"
+
+  # Python module path for your analytics toolkit (for function auditing)
+  # Set to null if you don't have a unified toolkit module
+  toolkit_module: "my_project.analytics"
+
+  # Command to run your test suite (for regression testing after toolkit changes)
+  test_command: "pytest tests/ -v --tb=short"
+
+  # Where benchmark artifacts are stored
+  benchmark_dir: "benchmarks"
+
+  # Where YAML checklists live
+  checklist_dir: "checklists"
+
+# Per-skill configuration
+# Add one entry per analysis skill you want to improve
+skills:
+  # Example: survival analysis skill
+  survival_analysis:
+    skill_path: "skills/survival_analysis.md"
+
+    primary_dataset:
+      path: "data/gbsg2.parquet"
+      description: "GBSG2 (German Breast Cancer Study Group 2). 686 patients."
+      columns: "horTh, age, menostat, tsize, tgrade, pnodes, progrec, estrec, time, cens"
+      notes: "time_col='time', event_col='cens' (1=event, 0=censored)"
+
+    backup_dataset:
+      path: "data/lung.parquet"
+      description: "Lung cancer dataset. 228 patients."
+      columns: "time, status, age, sex, ph.ecog, ph.karno, pat.karno, meal.cal, wt.loss"
+      notes: "time_col='time', event_col='status' (1=dead, 0=censored)"
+
+    # The primary quality metric for this skill's domain
+    primary_metric: "c_statistic"
+
+    # Published reference value for comparison (used in diminishing returns formula)
+    reference_value: 0.70
+
+    # Does this pipeline produce different outputs across runs?
+    # false = deterministic (bulk DE, survival Cox) → Phase 2 skipped
+    # true = stochastic (clustering, dimensionality reduction) → Phase 2 runs
+    stochastic: false
+
+  # Example: clustering analysis
+  clustering_analysis:
+    skill_path: "skills/clustering_analysis.md"
+
+    primary_dataset:
+      path: "data/iris.csv"
+      description: "Iris dataset. 150 samples, 4 features, 3 known classes."
+      columns: "sepal_length, sepal_width, petal_length, petal_width, species"
+      notes: "Ground truth labels in 'species' column"
+
+    backup_dataset:
+      path: "data/wine.csv"
+      description: "Wine dataset. 178 samples, 13 features, 3 classes."
+
+    primary_metric: "ari"
+    reference_value: 0.90
+    stochastic: true
+
+# Packages to check in Step 1 (Dependency Scan)
+# List all packages your skills reference
+dependencies:
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  # Add domain-specific packages:
+  # - lifelines
+  # - scanpy
+  # - pydeseq2

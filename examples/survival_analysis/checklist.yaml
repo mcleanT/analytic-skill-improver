@@ -1,0 +1,164 @@
+skill: survival_analysis
+description: "Survival analysis protocol adherence checklist"
+
+required_steps:
+  - name: data_loading
+    description: "Load clinical data and profile"
+    detect_any:
+      - "read_csv"
+      - "read_parquet"
+      - "load_data"
+      - "profile_dataframe"
+      - "pd.read"
+    required: true
+
+  - name: status_encoding
+    description: "Convert status to binary 0/1"
+    detect_any:
+      - "DECEASED"
+      - "LIVING"
+      - "cens"
+      - "status"
+      - "event"
+      - "map("
+      - "replace("
+      - "astype(int"
+      - "== 1"
+    required: true
+
+  - name: data_quality
+    description: "Assess data quality and exclusions"
+    detect_any:
+      - "missing"
+      - "dropna"
+      - "isna"
+      - "isnull"
+      - "censoring rate"
+      - "group_summary"
+      - "negative"
+      - "zero"
+      - "exclusion"
+    required: true
+
+  - name: kaplan_meier
+    description: "Kaplan-Meier survival estimation"
+    detect_any:
+      - "kaplan_meier"
+      - "KaplanMeier"
+      - "km_"
+      - "survfit"
+      - "survival_function"
+    required: true
+
+  - name: km_visualization
+    description: "KM curve visualization"
+    detect_any:
+      - "plot_km"
+      - "km_curve"
+      - "survival_curve"
+      - "survival_plot"
+      - "plot_km_curves"
+    required: true
+
+  - name: logrank_test
+    description: "Log-rank test for group comparison"
+    detect_any:
+      - "log-rank"
+      - "logrank"
+      - "log_rank"
+      - "kaplan_meier"
+      - "group_col"
+    required: true
+
+  - name: cox_regression
+    description: "Cox proportional hazards model"
+    detect_any:
+      - "cox_proportional_hazards"
+      - "CoxPH"
+      - "cox_ph"
+      - "hazard_ratio"
+      - "PHReg"
+    required: true
+
+  - name: ph_assumption_check
+    description: "Proportional hazards assumption check"
+    detect_any:
+      - "schoenfeld"
+      - "ph_assumption"
+      - "proportional_hazard"
+      - "ph_test"
+      - "ph_warning"
+      - "PH"
+    required: true
+
+  - name: concordance_index
+    description: "Model discrimination via C-statistic"
+    detect_any:
+      - "concordance"
+      - "c_statistic"
+      - "c_index"
+      - "c-index"
+      - "c-statistic"
+      - "model_fit"
+    required: true
+
+  - name: forest_plot
+    description: "Forest plot of hazard ratios"
+    detect_any:
+      - "plot_forest"
+      - "forest_plot"
+      - "forest("
+    required: true
+
+  - name: biological_interpretation
+    description: "Biological interpretation and sub-hypotheses"
+    detect_any:
+      - "biological"
+      - "interpretation"
+      - "mechanism"
+      - "sub_hypothes"
+      - "prognosis"
+      - "prognostic"
+    required: true
+
+  - name: findings_serialization
+    description: "Findings written to JSON"
+    detect_any:
+      - "findings_to_json"
+      - "json.dump"
+      - "finding("
+      - "stat_result"
+    required: true
+
+  - name: risk_stratification
+    description: "Risk group stratification from Cox model"
+    detect_any:
+      - "risk_group"
+      - "risk_score"
+      - "stratif"
+      - "tertile"
+      - "quantile"
+      - "high_risk"
+      - "low_risk"
+    required: false
+    condition: "multivariate_model"
+
+ordering_constraints:
+  - before: data_loading
+    after: status_encoding
+  - before: status_encoding
+    after: kaplan_meier
+  - before: kaplan_meier
+    after: km_visualization
+  - before: kaplan_meier
+    after: logrank_test
+  - before: data_loading
+    after: cox_regression
+  - before: cox_regression
+    after: ph_assumption_check
+  - before: cox_regression
+    after: concordance_index
+  - before: cox_regression
+    after: forest_plot
+  - before: cox_regression
+    after: biological_interpretation

@@ -1,0 +1,31 @@
+skill: example_skill
+description: "Example checklist for protocol adherence"
+
+required_steps:
+  - name: data_loading
+    description: "Load and profile the dataset"
+    detect_any:
+      - "read_csv"
+      - "read_parquet"
+      - "load_data"
+    required: true
+
+  - name: quality_check
+    description: "Assess data quality"
+    detect_any:
+      - "missing"
+      - "dropna"
+      - "quality"
+    required: true
+
+  - name: exploratory_analysis
+    description: "Summarize distributions and group differences"
+    detect_any:
+      - "describe"
+      - "value_counts"
+      - "profile_dataframe"
+    required: false
+
+ordering_constraints:
+  - before: data_loading
+    after: quality_check

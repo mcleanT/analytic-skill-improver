@@ -1,0 +1,158 @@
+skill: bulk_rnaseq
+description: "Bulk RNA-seq DE analysis protocol adherence checklist"
+
+required_steps:
+  - name: data_loading
+    description: "Load count matrix and verify shape"
+    detect_any:
+      - "read_csv"
+      - "read_parquet"
+      - "load_data"
+      - "count_df"
+      - "count_matrix"
+      - "profile_dataframe"
+    required: true
+
+  - name: gene_filtering
+    description: "Filter lowly-expressed genes"
+    detect_any:
+      - "filter_low"
+      - "filter_genes"
+      - "min_count"
+      - "filterbyexpr"
+      - ">= 10"
+      - "> 10"
+      - "n_genes"
+      - "low_count"
+      - "expressed"
+    required: true
+
+  - name: normalization
+    description: "Normalize counts (size-factor or CPM)"
+    detect_any:
+      - "normalize"
+      - "size_factor"
+      - "cpm"
+      - "log2"
+      - "library_size"
+      - "lib_size"
+      - "normalize_counts"
+      - "geometric_mean"
+    required: true
+
+  - name: pca_qc
+    description: "PCA for sample quality check"
+    detect_any:
+      - "pca_analysis"
+      - "pca("
+      - "plot_pca"
+      - "PCA"
+      - "n_components"
+    required: true
+
+  - name: differential_expression
+    description: "Count-based DE analysis"
+    detect_any:
+      - "deseq2_de"
+      - "negative_binomial"
+      - "padj"
+      - "p_adj"
+      - "log2fc"
+      - "log2_fold"
+      - "fold_change"
+      - "compare_two_groups"
+      - "differential"
+    required: true
+
+  - name: multiple_testing
+    description: "Multiple testing correction"
+    detect_any:
+      - "correct_pvalues"
+      - "fdr_bh"
+      - "benjamini"
+      - "multipletests"
+      - "padj"
+      - "p_adj"
+      - "adjusted"
+      - "bonferroni"
+    required: true
+
+  - name: volcano_plot
+    description: "Volcano plot visualization"
+    detect_any:
+      - "plot_volcano"
+      - "volcano"
+      - "log2fc"
+      - "-log10"
+    required: true
+
+  - name: heatmap
+    description: "Heatmap of top DE genes"
+    detect_any:
+      - "plot_heatmap"
+      - "heatmap"
+      - "clustermap"
+      - "sns.heatmap"
+    required: true
+
+  - name: enrichment
+    description: "Gene set or pathway enrichment"
+    detect_any:
+      - "fisher_enrichment"
+      - "gsea"
+      - "enrichment"
+      - "pathway"
+      - "gene_set"
+      - "go_"
+      - "kegg"
+      - "reactome"
+    required: true
+
+  - name: biological_interpretation
+    description: "Biological interpretation of DE results"
+    detect_any:
+      - "biological"
+      - "interpretation"
+      - "mechanism"
+      - "pathway"
+      - "function"
+      - "sub_hypothes"
+    required: true
+
+  - name: findings_serialization
+    description: "Findings written to JSON"
+    detect_any:
+      - "findings_to_json"
+      - "json.dump"
+      - "finding("
+      - "stat_result"
+    required: true
+
+  - name: batch_correction
+    description: "Batch/donor effect handled"
+    detect_any:
+      - "batch"
+      - "donor"
+      - "covariate"
+      - "paired"
+      - "combat"
+      - "removebatcheffect"
+      - "block"
+    required: false
+    condition: "has_batch"
+
+ordering_constraints:
+  - before: data_loading
+    after: gene_filtering
+  - before: gene_filtering
+    after: normalization
+  - before: normalization
+    after: pca_qc
+  - before: data_loading
+    after: differential_expression
+  - before: differential_expression
+    after: volcano_plot
+  - before: differential_expression
+    after: heatmap
+  - before: differential_expression
+    after: enrichment
