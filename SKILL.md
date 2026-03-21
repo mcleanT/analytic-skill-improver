@@ -1,53 +1,12 @@
+---
+name: skill-improver
+description: "Improve analysis skills through benchmark-driven iteration. Audits skill against literature/codebase, installs missing dependencies, benchmarks on reference datasets, compares against published analyses, and fixes gaps. Use when the user says 'improve skill', 'self-improve', 'optimize skill', 'benchmark and improve'."
+allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, Agent, WebFetch, WebSearch]
+---
+
 # Skill Improver
 
-Benchmark-driven self-improvement for analysis skills.
-
----
-
-## Prerequisites
-
-To use this skill improver, your project needs:
-
-- **An analysis toolkit** — a Python library with a public API (functions that skills reference). This could be a stats/ML package, a domain analysis library, or any collection of reusable analysis functions.
-- **Skills as markdown files** — analysis protocol documents that describe how to perform a class of analysis using your toolkit. These live in a directory configured in `config.yaml` as `skill_dir`.
-- **A test suite** for the toolkit — so toolkit extensions can be validated before being used by skills.
-- **Python 3.10+** with PyYAML installed (`pip install pyyaml`).
-- **A `config.yaml`** at the project root (see below for the schema).
-
-### config.yaml Schema
-
-```yaml
-# Paths (relative to project root unless absolute)
-skill_dir: prompts/skills          # Directory containing *.md skill files
-toolkit_module: src/mypackage/analytics  # Root of the analysis toolkit
-benchmark_dir: benchmarks          # Directory for benchmark runs, checklists, and reports
-test_command: "python -m pytest tests/test_analytics/ -v --tb=short"
-
-# Dependencies to check (Step 1)
-dependencies:
-  - numpy
-  - pandas
-  - scipy
-  - statsmodels
-  # add all packages your skills reference
-
-# Per-skill dataset and metric configuration (Step 5, Step 8, Step 11)
-skills:
-  my_skill_name:
-    primary_dataset:
-      path: path/to/dataset.csv        # or a loader expression
-      description: "Human PBMC 10x 3K cells"
-      notes: "Standard scRNA-seq benchmark"
-    backup_dataset:
-      path: path/to/backup.csv
-      description: "Mouse cortex dataset"
-      notes: "Cross-species cross-validation"
-    primary_metric: ari                # The key in summary.json to track
-    reference_value: 0.87              # Published reference for comparison
-    stochastic: true                   # Whether Phase 2 runs (false = deterministic)
-```
-
----
+Benchmark-driven self-improvement for analysis skills in `prompts/skills/*.md`.
 
 ## Trigger
 
@@ -60,11 +19,12 @@ skills:
 ```
 PHASE 1 — Free Wins (no benchmark runs, always run first)
 │
-├─ 1. Install missing dependencies
-├─ 2. Fix broken function references
-├─ 3. Compare against current literature
-├─ 4. Replace prose with code blocks
-├─ 5. Run baseline benchmark (N=3)
+├─ 1.   Install missing dependencies
+├─ 1.5  Generate checklist YAML ──────────── ⚡ checklist-generator
+├─ 2.   Fix broken function references
+├─ 3.   Compare against current literature ─ ⚡ skill-improver-triage
+├─ 4.   Replace prose with code blocks ───── ⚡ skill-editor
+├─ 5.   Run baseline benchmark (N=3)
 │
 ├─ Stochastic? ──NO──→ Phase 2 adds no value. Fix remaining
 │      │                gaps as Tier 2 toolkit extensions.
@@ -72,18 +32,36 @@ PHASE 1 — Free Wins (no benchmark runs, always run first)
 │      │
 │  PHASE 2 — Benchmark Loop (stochastic pipelines only)
 │  │
-│  ├─ 6. Compare best run against reference analysis
-│  ├─ 7. Diagnose and fix ONE gap
-│  ├─ 8. Re-benchmark (N=3)
-│  ├─ 9. Keep if improved, revert if not
-│  └─ 10. Repeat until plateau (2 rounds < 0.01 improvement)
+│  ├─ 6.  Compare best run vs reference ──── ⚡ skill-gap-analyzer
+│  ├─ 7.  Diagnose and fix ONE gap ────────── ⚡ skill-editor
+│  ├─ 8.  Re-benchmark (N=3)
+│  ├─ 9.  Keep if improved, revert if not
+│  └─ 10. Check convergence ─────────────── ⚡ convergence-checker
 │
 POST-CONVERGENCE
-├─ 11. Cross-validate on backup dataset
-├─ 12. Add follow-up signposts (from Bucket C)
+├─ 11.   Cross-validate on backup dataset
+├─ 12.   Add follow-up signposts (from Bucket C)
 ├─ 12.5. Log toolkit upgrades (from Bucket B)
-└─ 13. Report results
+├─ 13.   Report results
+└─ 13.5. Cross-skill consistency check ──── ⚡ skill-include-propagator
 ```
+
+---
+
+## Sub-Skills
+
+Six specialized skills automate the manual decision gates. Each is invoked
+at its marked step (⚡ in the process diagram). They can also be triggered
+independently outside the improvement loop.
+
+| Skill | Step | Trigger phrase | What it does |
+|-------|------|---------------|-------------|
+| **checklist-generator** | 1.5 | "generate checklist" | Creates YAML adherence checklist from skill protocol |
+| **skill-improver-triage** | 3 | "triage findings" | Sorts literature findings into A/B/C buckets |
+| **skill-editor** | 4, 7 | "edit skill" | Proposes + applies skill .md edits from audit/gap findings |
+| **skill-gap-analyzer** | 6 | "analyze gaps" | Structured reference comparison with gap classification |
+| **convergence-checker** | 10 | "check convergence" | Computes continue_value, recommends STOP/CONTINUE |
+| **skill-include-propagator** | 13.5 | "propagate includes" | Batch-adds missing `{{include}}` markers |
 
 ---
 
@@ -94,27 +72,31 @@ Run all of these before spending compute on benchmarks. Order is by value
 
 ### Automated Tools
 
-The following scripts in `{benchmark_dir}/` support the improvement process:
+The following scripts in `benchmarks/` support the improvement process:
 
 | Tool | Command | Purpose |
 |------|---------|---------|
-| **Prompt generator** | `python {benchmark_dir}/dispatch_benchmark.py {skill} --version {v} --n-runs 3` | Generate standardized benchmark subagent prompts from template |
-| **Checklist evaluator** | `python {benchmark_dir}/evaluate_checklist.py {skill} --all` | Score protocol adherence of benchmark scripts against YAML checklist |
-| **Version comparator** | `python {benchmark_dir}/compare_versions.py {skill}` | Extract metrics from summary.json across versions, produce trajectory report |
+| **Prompt generator** | `python benchmarks/dispatch_benchmark.py {skill} --version {v} --n-runs 3` | Generate standardized benchmark subagent prompts from template |
+| **Checklist evaluator** | `python benchmarks/evaluate_checklist.py {skill} --all` | Score protocol adherence of benchmark scripts against YAML checklist |
+| **Version comparator** | `python benchmarks/compare_versions.py {skill}` | Extract metrics from summary.json across versions, produce trajectory report |
 
 Use these instead of manual inspection. Dispatch benchmark subagents using the generated prompts for consistency.
 
 ### Step 1: Dependency Scan and Install
 
-The single highest-leverage action for deterministic pipelines. Read the
-`dependencies` list from `config.yaml` and check each package:
+The single highest-leverage action for deterministic pipelines. Check whether
+packages the skill references are actually importable.
+
+> **If no checklist exists** for this skill (`benchmarks/skill_checklists/{skill}.yaml`),
+> run the **checklist-generator** sub-skill now (Step 1.5) before proceeding.
+> Without a checklist, Steps 5/8 cannot score adherence.
+
+Check whether packages the skill references are actually importable:
 
 ```bash
 python -c "
-import yaml
-with open('config.yaml') as f:
-    cfg = yaml.safe_load(f)
-packages = cfg.get('dependencies', [])
+packages = ['pydeseq2', 'scanpy', 'anndata', 'leidenalg', 'igraph',
+            'scrublet', 'scvelo', 'cellrank', 'lifelines', 'squidpy']
 for pkg in packages:
     try:
         __import__(pkg)
@@ -133,32 +115,30 @@ For each missing package the skill references:
 
 ### Step 2: Function Audit
 
-Verify every function called in the skill's code blocks exists with the correct signature.
-`scripts/skill_auditor.py` (bundled with this repo) performs this check. It needs to know
-which toolkit module to audit against — configure `toolkit_module` in `config.yaml`.
+Verify every function called in the skill's code blocks exists with the correct signature:
 
 ```python
 import sys; sys.path.insert(0, '.'); sys.path.insert(0, 'src')
-from scripts.skill_auditor import audit_skill_file
+from benchmarks.skill_auditor import audit_skill_file
 from pathlib import Path
-import yaml
 
-with open('config.yaml') as f:
-    cfg = yaml.safe_load(f)
-
-skill_dir = cfg['skill_dir']
-findings = audit_skill_file(Path(f'{skill_dir}/{skill_name}.md'))
+findings = audit_skill_file(Path('prompts/skills/{skill_name}.md'))
 for f in findings:
     print(f'  [{f.severity}] {f.function_name}: {f.message}')
 ```
 
-Fix every error: wrong param names, wrong return types, missing imports.
+Fix every error: wrong param names (`n_bootstrap` → `n_boot`), wrong return types
+(`fig, ax = plot_heatmap()` → `ax = plot_heatmap()`), missing imports.
 
 ### Step 3: Literature Comparison
 
 Search for current best practices (2024-2025) in the skill's analysis domain.
 Use `research-lookup` skill or web search. Compare each protocol step against
 field standards.
+
+> **⚡ Sub-skill**: After gathering literature findings, invoke the
+> **skill-improver-triage** skill ("triage findings") to automatically sort
+> them into A/B/C buckets. Review the triage output and adjust if needed.
 
 **Categorize each finding into one of three buckets:**
 
@@ -192,27 +172,24 @@ tickets. Bucket C items become the Follow-Up Signposts in Step 12.**
 **This is the core lesson from benchmarking**: prose guidance gets interpreted
 differently by every agent. Code blocks are followed identically.
 
+> **⚡ Sub-skill**: Use the **skill-editor** skill ("edit skill") to propose
+> prose→code conversions. It verifies every function signature against the
+> actual toolkit source before proposing changes.
+
 For every critical step in the skill that is currently prose-only:
 - Add a fenced `python` code block with the exact function calls and parameters
 - Add `# MANDATORY` comments on steps that must not be skipped
-- Document your project's reporting API with EXACT function signatures
-
-The #1 cause of agent errors is hallucinated keyword arguments. Show the exact
-call syntax — positional vs keyword args, return types. For example:
+- Include the `finding()` / `stat_result()` / `findings_to_json()` API with
+  exact signatures (every benchmark run gets these wrong without documentation)
 
 ```python
-# EXAMPLE — replace with your project's actual reporting API:
-#
-# If your toolkit has a findings/reporting API, document it here with EXACT
-# call syntax, not just function names. Agents will hallucinate keyword args
-# unless every argument is shown explicitly.
-#
-# stat_result("test name", statistic=0.0, p_value=0.001, effect_size=2.5)
-# finding("description", [sr], confidence_level=0.9)
-# findings_to_json([f1, f2])   # returns STRING — write to file yourself
+# finding() API (EXACT — do not deviate):
+sr = stat_result("test name", statistic=0.0, p_value=0.001, effect_size=2.5)
+f = finding("description of result", [sr], confidence_level=0.9)
+json_str = findings_to_json([f1, f2])  # returns STRING, write to file yourself
+with open('findings.json', 'w') as fh:
+    fh.write(json_str)
 ```
-
-Adapt this block to match your toolkit's actual reporting API exactly.
 
 ### Step 5: Baseline Benchmark
 
@@ -220,32 +197,34 @@ Run N=3 parallel subagent analyses on a reference dataset to establish baseline
 quality. Each subagent independently writes and executes an analysis script
 following the skill protocol.
 
-**Reference dataset selection**: Configure reference datasets per skill in
-`config.yaml`. Each skill entry needs:
-- `primary_dataset`: path, description, and notes
-- `backup_dataset`: for cross-validation (different organism, tissue, or platform)
-- `primary_metric`: the domain-specific quality metric name (key in `summary.json`)
-- `reference_value`: published reference value for comparison
-- `stochastic`: `true` or `false` (determines whether Phase 2 runs)
+**Reference dataset selection** (use pre-seeded candidates):
+
+| Skill | Dataset | Source |
+|-------|---------|--------|
+| scrna_seq | PBMC 3K | scanpy.datasets.pbmc3k() |
+| bulk_rnaseq | Airway | GEO GSE52778 / bioconnector mirror |
+| survival_analysis | GBSG2 | sklearn / TH.data |
+| clustering_analysis | Iris / Wine | sklearn.datasets |
+| spatial_analysis | Mouse brain Visium | squidpy.datasets |
+| timeseries | Airline passengers | seaborn / statsmodels |
 
 If no pre-seeded dataset exists, search for one: small (<5K samples), public,
 with a published reference analysis providing ground truth.
 
 **Stochasticity check**: Are outputs identical across the 3 runs?
-- **YES** (deterministic pipelines like bulk DE, survival Cox): Phase 2 adds
+- **YES** (bulk DE, survival Cox): The pipeline is deterministic. Phase 2 adds
   no value — replicability is trivially perfect. Remaining gaps are toolkit
   capability issues (Tier 2) or biological. Skip to post-convergence.
-- **NO** (stochastic pipelines like clustering, trajectory, dimensionality
-  reduction): Proceed to Phase 2.
+- **NO** (clustering, trajectory, dimensionality reduction): Proceed to Phase 2.
 
 **Generate benchmark prompts:**
 ```bash
-python {benchmark_dir}/dispatch_benchmark.py {skill_name} --version baseline --n-runs 3
+python benchmarks/dispatch_benchmark.py {skill_name} --version baseline --n-runs 3
 ```
 Dispatch each generated prompt as a sonnet subagent. After all complete, evaluate:
 ```bash
-python {benchmark_dir}/evaluate_checklist.py {skill_name} --all
-python {benchmark_dir}/compare_versions.py {skill_name}
+python benchmarks/evaluate_checklist.py {skill_name} --all
+python benchmarks/compare_versions.py {skill_name}
 ```
 
 ---
@@ -258,6 +237,10 @@ Only for stochastic pipelines where outputs vary across runs.
 
 Compare the best benchmark run against the published canonical analysis for
 the reference dataset. This identifies WHY outputs diverge, not just WHERE.
+
+> **⚡ Sub-skill**: Invoke the **skill-gap-analyzer** skill ("analyze gaps")
+> to produce a structured gap report with impact ratings (CRITICAL/HIGH/MEDIUM/LOW)
+> and root cause tags (SKILL_PROSE/SKILL_MISSING/SKILL_WRONG/TOOLKIT_GAP).
 
 **How**: Dispatch a subagent to:
 1. Read the best run's `analysis_code.py` and `summary.json`
@@ -274,6 +257,10 @@ the reference dataset. This identifies WHY outputs diverge, not just WHERE.
   LFC shrinkage, no PCA produced
 
 ### Step 7: Diagnose and Fix ONE Gap
+
+> **⚡ Sub-skill**: Use the **skill-editor** skill ("edit skill") to propose
+> and apply the fix. It handles all three edit types: prose→code, fix wrong
+> reference, and add missing step.
 
 From the reference comparison, pick the highest-impact gap and fix it.
 
@@ -296,8 +283,7 @@ From the reference comparison, pick the highest-impact gap and fix it.
 
 **After ANY toolkit change** (new function, modified signature, new parameter):
 ```bash
-# MANDATORY: Run full toolkit test suite to catch regressions
-# Use the test_command from config.yaml, e.g.:
+# MANDATORY: Run full analytics test suite to catch regressions
 python -m pytest tests/test_analytics/ -v --tb=short
 ```
 Do not proceed until all tests pass.
@@ -305,19 +291,23 @@ Do not proceed until all tests pass.
 ### Step 8: Re-benchmark (N=3)
 
 Run 3 parallel subagents with the fixed skill. Compare against previous round
-using the primary metric configured for this skill in `config.yaml`.
+using domain-specific metrics:
 
 **Generate prompts and evaluate:**
 ```bash
-python {benchmark_dir}/dispatch_benchmark.py {skill_name} --version {round_N} --n-runs 3
+python benchmarks/dispatch_benchmark.py {skill_name} --version {round_N} --n-runs 3
 # After runs complete:
-python {benchmark_dir}/evaluate_checklist.py {skill_name} --all
-python {benchmark_dir}/compare_versions.py {skill_name}
+python benchmarks/evaluate_checklist.py {skill_name} --all
+python benchmarks/compare_versions.py {skill_name}
 ```
 
-The primary metric for each skill is defined in `config.yaml` under
-`skills.{skill_name}.primary_metric`. Compare the current run's value in
-`summary.json` against `skills.{skill_name}.reference_value` to measure headroom.
+| Skill Domain | Primary Metric |
+|-------------|---------------|
+| scrna_seq | ARI vs reference labels |
+| bulk_rnaseq | Known DE gene recovery (N/total) |
+| survival_analysis | C-index vs published model |
+| clustering_analysis | ARI vs known labels |
+| spatial_analysis | Domain ARI |
 
 ### Step 9: Keep or Revert
 
@@ -326,6 +316,10 @@ The primary metric for each skill is defined in `config.yaml` under
 - Revert is manual: undo the edit. No git machinery needed for interactive sessions.
 
 ### Step 10: Check Convergence (Diminishing Returns)
+
+> **⚡ Sub-skill**: Invoke the **convergence-checker** skill ("check convergence")
+> to auto-compute continue_value from benchmark artifacts and get a
+> STOP/CONTINUE recommendation.
 
 Compute the **continue_value** after each round to decide whether further
 investment is worthwhile:
@@ -346,19 +340,19 @@ is close to the published reference.
 **How to compute each term:**
 
 1. **bucket_ratio** — Count Bucket A + B items from Step 3. Subtract resolved
-   items. Check `{benchmark_dir}/toolkit_upgrades/{skill}.md` for remaining B items.
+   items. Check `benchmarks/toolkit_upgrades/{skill}.md` for remaining B items.
    Example: 8 items identified, 5 resolved → ratio = 3/8 = 0.375
 
 2. **gap_ratio** — Run the checklist evaluator:
    ```bash
-   python {benchmark_dir}/evaluate_checklist.py {skill_name} --all
+   python benchmarks/evaluate_checklist.py {skill_name} --all
    ```
    Use `1 - mean_adherence_score`. Example: 92% adherence → gap = 0.08
 
 3. **metric_headroom** — Compare current primary metric against the published
    reference value for the dataset. Run:
    ```bash
-   python {benchmark_dir}/compare_versions.py {skill_name}
+   python benchmarks/compare_versions.py {skill_name}
    ```
    Example: reference C-index = 0.70, current = 0.688 → headroom = 0.017
 
@@ -422,7 +416,7 @@ nomograms, molecular subtyping, treatment × biomarker interaction.
 ### Step 12.5: Log Toolkit Upgrades
 
 For each **Bucket B item** from Step 3, create an actionable entry in
-`{benchmark_dir}/toolkit_upgrades/{skill_name}.md` documenting:
+`benchmarks/toolkit_upgrades/{skill_name}.md` documenting:
 
 ```markdown
 ## {Capability Name}
@@ -457,9 +451,30 @@ Summarize the improvement trajectory:
 
 **Generate the final trajectory report:**
 ```bash
-python {benchmark_dir}/compare_versions.py {skill_name}
+python benchmarks/compare_versions.py {skill_name}
 ```
-This produces `{benchmark_dir}/runs/{skill_name}/improvement_trajectory.md` with the full metric comparison table.
+This produces `benchmarks/runs/{skill_name}/improvement_trajectory.md` with the full metric comparison table.
+
+### Step 13.5: Cross-Skill Consistency Check (MANDATORY)
+
+After the trajectory report, run the consistency checker across all skills:
+
+```bash
+python scripts/check_cross_skill_consistency.py --skill-dir prompts/skills/ --shared-dir prompts/skills/_shared/
+```
+
+If inconsistencies are found:
+- Review the proposed fixes
+- Apply fixes that are correct (auto-fix with confirmation)
+- Skip fixes that need domain-specific judgment (e.g., a skill intentionally uses a non-standard pattern marked with `# raw:`)
+- Re-run the checker to verify clean
+
+> **⚡ Sub-skill**: If missing `{{include}}` markers are detected, invoke the
+> **skill-include-propagator** skill ("propagate includes") to batch-add them
+> across all affected skills. It knows the correct placement rules for each
+> shared block and which skills need `correction_guidance.md`.
+
+This step prevents skill improvements from introducing drift that breaks other skills.
 
 ---
 
@@ -516,13 +531,12 @@ This produces `{benchmark_dir}/runs/{skill_name}/improvement_trajectory.md` with
 
 For autonomous batch improvement of all skills:
 
-1. Read `config.yaml` to get the full list of skills under `skills:` and sort
-   them by expected value (stochastic skills first — they benefit most from
-   the benchmark loop).
+1. Sort skills by expected value (stochastic skills first — they benefit
+   most from the benchmark loop)
 2. For each skill: run Phase 1 → baseline → stochasticity check →
    Phase 2 if needed → cross-validate → report
 3. Commit each skill's improvements on a dedicated branch
 4. After all skills: merge to staging branch for human review
 
 **Cost estimate**: ~$10-15 per skill (Phase 1 + 3 rounds × 3 runs).
-Actual total depends on the number of skills in `config.yaml`.
+Full 12-skill run: ~$120-180, 6-12 hours.
