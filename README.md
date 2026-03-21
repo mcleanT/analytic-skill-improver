@@ -134,13 +134,13 @@ This runs 3 independent agents on your reference dataset and reports adherence, 
 Follow the SKILL.md protocol in your Claude Code session:
 
 ```
-/skill-improver --skill your_skill --max-rounds 3
+/analytic-skill-improver --skill your_skill --max-rounds 3
 ```
 
 Or run autonomously (no pauses between rounds):
 
 ```
-/skill-improver --skill your_skill --autonomous --max-rounds 3
+/analytic-skill-improver --skill your_skill --autonomous --max-rounds 3
 ```
 
 Results are written to `benchmarks/runs/{skill_name}/results.tsv` after each round.
@@ -150,7 +150,7 @@ Results are written to `benchmarks/runs/{skill_name}/results.tsv` after each rou
 ## Project Structure
 
 ```
-skill-improver/
+analytic-skill-improver/
 ├── config.yaml.example          # Template — copy to config.yaml
 ├── LICENSE
 ├── README.md
@@ -285,5 +285,5 @@ If Skill Improver is useful for your work, please cite it as:
 
 ```
 Skill Improver: Benchmark-driven self-improvement for LLM analysis skills.
-https://github.com/[owner]/skill-improver
+https://github.com/mcleanT/analytic-skill-improver
 ```
