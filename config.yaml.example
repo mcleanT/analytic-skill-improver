@@ -20,6 +20,9 @@ project:
   # Where YAML checklists live
   checklist_dir: "checklists"
 
+  # Where shared sub-protocol files live (for {{include}} expansion)
+  shared_dir: "skills/_shared"
+
 # Per-skill configuration
 # Add one entry per analysis skill you want to improve
 skills:

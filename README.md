@@ -232,6 +232,32 @@ Three scripts handle the computational work. The improvement loop itself is orch
 | `scripts/dispatch_benchmark.py` | Launch N parallel agent runs on a reference dataset; collect outputs | `python scripts/dispatch_benchmark.py skill_name --n-runs 3` |
 | `scripts/compute_composite.py` | Aggregate adherence + effectiveness + replicability into one score | Called by the benchmark harness; also usable standalone |
 | `scripts/audit_skill.py` | Phase 1 static auditor — literature check + function signature verification | `python scripts/audit_skill.py skill_name` |
+| `scripts/expand_skill.py` | Inline `{{include _shared/X.md}}` markers before dispatching benchmark subagents | `python scripts/expand_skill.py skills/clustering_analysis.md` |
+| `scripts/check_cross_skill_consistency.py` | 5-category consistency checker — runs as Step 13.5 after each improvement | `python scripts/check_cross_skill_consistency.py --skill-dir skills/` |
+
+### Cross-Skill Consistency
+
+When you have multiple skills that share common patterns, the system prevents drift:
+
+**Shared sub-protocols** (`{skill_dir}/_shared/`): Extract common documentation blocks
+(visualization standards, reporting API, imports) into shared files. Skills reference
+them with `{{include _shared/viz_standards.md}}` markers that are expanded before
+benchmark runs.
+
+**Consistency checker** (`scripts/check_cross_skill_consistency.py`): Runs automatically
+as Step 13.5 after each skill improvement. Detects:
+1. Missing `{{include}}` markers (shared block freshness)
+2. Raw function calls that should use pipeline wrappers
+3. Wrong keyword argument patterns
+4. Wrong return type assumptions
+5. Inlined copies that have drifted from the shared source
+
+```bash
+python scripts/check_cross_skill_consistency.py --skill-dir skills/ --shared-dir skills/_shared/
+```
+
+**Skill expansion** (`scripts/expand_skill.py`): Inlines `{{include}}` markers before
+dispatching benchmark subagents, so agents see a single self-contained skill file.
 
 ---
 
