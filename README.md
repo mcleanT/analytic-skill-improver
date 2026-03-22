@@ -261,6 +261,26 @@ dispatching benchmark subagents, so agents see a single self-contained skill fil
 
 ---
 
+### Sub-Skills
+
+Six specialized sub-skills automate the manual decision gates in the improvement
+loop. Each is invoked at its marked step in the SKILL.md protocol.
+
+| Skill | Step | What it automates |
+|-------|------|-------------------|
+| `checklist-generator` | 1.5 | YAML adherence checklist generation |
+| `skill-improver-triage` | 3 | Literature finding A/B/C bucketing |
+| `skill-editor` | 4, 7 | Skill .md edit proposals from audit findings |
+| `skill-gap-analyzer` | 6 | Reference comparison + gap classification |
+| `convergence-checker` | 10 | Diminishing returns formula computation |
+| `skill-include-propagator` | 13.5 | Batch `{{include}}` marker propagation |
+
+With these sub-skills, human effort per skill improvement shrinks to reviewing
+proposed edits and approving STOP/CONTINUE decisions. See
+[docs/sub-skills.md](docs/sub-skills.md) for detailed documentation.
+
+---
+
 ## Composite Score Formula
 
 ```

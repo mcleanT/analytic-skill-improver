@@ -79,8 +79,8 @@ PHASE 1 — Free Wins (no benchmark runs, always run first)
 │
 ├─ 1. Install missing dependencies
 ├─ 2. Fix broken function references
-├─ 3. Compare against current literature
-├─ 4. Replace prose with code blocks
+├─ 3. Compare against current literature ──── ⚡ skill-improver-triage
+├─ 4. Replace prose with code blocks ──────── ⚡ skill-editor
 ├─ 5. Run baseline benchmark (N=3)
 │
 ├─ PHASE 1.5 — Comprehension (close the Gulf of Comprehension)
@@ -100,19 +100,38 @@ PHASE 1 — Free Wins (no benchmark runs, always run first)
 │      │
 │  PHASE 2 — Benchmark Loop (stochastic pipelines only)
 │  │
-│  ├─ 6. Compare best run against reference analysis
-│  ├─ 7. Diagnose and fix ONE gap
+│  ├─ 6. Compare best run against reference analysis ── ⚡ skill-gap-analyzer
+│  ├─ 7. Diagnose and fix ONE gap ──────────────────── ⚡ skill-editor
 │  ├─ 8. Re-benchmark (N=3)
 │  ├─ 9. Keep if improved, revert if not
-│  └─ 10. Repeat until plateau (2 rounds < 0.01 improvement)
+│  └─ 10. Repeat until plateau ─────────────────────── ⚡ convergence-checker
 │
 POST-CONVERGENCE
 ├─ 11. Cross-validate on backup dataset
 ├─ 12. Add follow-up signposts (from Bucket C)
 ├─ 12.5. Log toolkit upgrades (from Bucket B)
 ├─ 13. Report results
-└─ 13.5. Cross-skill consistency check
+└─ 13.5. Cross-skill consistency check ──────── ⚡ skill-include-propagator
 ```
+
+---
+
+## Sub-Skills
+
+Six specialized skills automate the manual decision gates. Each is invoked
+at its marked step (⚡ in the process diagram). They can also be triggered
+independently outside the improvement loop.
+
+| Skill | Step | Trigger phrase | What it does |
+|-------|------|---------------|-------------|
+| **checklist-generator** | 1.5 | "generate checklist" | Creates YAML adherence checklist from skill protocol |
+| **skill-improver-triage** | 3 | "triage findings" | Sorts literature findings into A/B/C buckets |
+| **skill-editor** | 4, 7 | "edit skill" | Proposes + applies skill .md edits from audit/gap findings |
+| **skill-gap-analyzer** | 6 | "analyze gaps" | Structured reference comparison with gap classification |
+| **convergence-checker** | 10 | "check convergence" | Computes continue_value, recommends STOP/CONTINUE |
+| **skill-include-propagator** | 13.5 | "propagate includes" | Batch-adds missing `{{include}}` markers |
+
+See [docs/sub-skills.md](docs/sub-skills.md) for detailed documentation.
 
 ---
 
@@ -194,6 +213,10 @@ The auditor:
 
 ### Step 3: Literature Comparison
 
+> **⚡ Sub-skill**: Use the **skill-improver-triage** skill ("triage findings")
+> to automatically sort literature findings into A/B/C buckets. Reduces ~30%
+> of Phase 1 manual effort.
+
 Search for current best practices (2024-2025) in the skill's analysis domain.
 Use `research-lookup` skill or web search. Compare each protocol step against
 field standards.
@@ -226,6 +249,10 @@ Flag Bucket C items (follow-up directions):
 tickets. Bucket C items become the Follow-Up Signposts in Step 12.**
 
 ### Step 4: Convert Prose to Code Blocks
+
+> **⚡ Sub-skill**: Use the **skill-editor** skill ("edit skill") to propose
+> and apply edits from audit findings. It handles prose→code conversion,
+> wrong reference fixes, and missing step additions.
 
 **This is the core lesson from benchmarking**: prose guidance gets interpreted
 differently by every agent. Code blocks are followed identically.
@@ -480,6 +507,10 @@ Compute composite score from the baseline results. Record in results.tsv with
 
 ### Step 6b — Reference Comparison (HIGHEST VALUE STEP)
 
+> **⚡ Sub-skill**: Use the **skill-gap-analyzer** skill ("analyze gaps") for
+> structured reference comparison with gap classification and prioritized
+> fix queue.
+
 Compare the best benchmark run against the published canonical analysis for
 the reference dataset. This identifies WHY outputs diverge, not just WHERE.
 
@@ -530,7 +561,7 @@ LOOP (repeat until convergence):
        - Remove unnecessary steps that don't improve effectiveness
        - Sharpen detect_any patterns in checklist YAML for low-hit steps
 
-  3. MODIFY {skill_dir}/{skill_name}.md ONLY
+  3. MODIFY {skill_dir}/{skill_name}.md ONLY  ⚡ skill-editor
      (no changes to checklist, reference dataset, or benchmark infrastructure)
 
   4. COMMIT the change
@@ -573,7 +604,7 @@ LOOP (repeat until convergence):
      Append a tab-separated row:
      {commit_hash}\t{composite}\t{adherence}\t{effectiveness}\t{replicability}\t{keep|discard}\t{description}
 
-  9. CHECK convergence — STOP if ANY condition is met:
+  9. CHECK convergence — STOP if ANY condition is met:  ⚡ convergence-checker
        - Score improvement < 0.01 for 2 consecutive rounds (plateau)
        - max_rounds reached (unless --converge was passed)
        - All Phase 1 findings addressed AND effectiveness > 0.85
@@ -737,6 +768,11 @@ python scripts/compare_versions.py {skill_name}
 ```
 
 ### Step 13.5: Cross-Skill Consistency Check (MANDATORY)
+
+> **⚡ Sub-skill**: If missing `{{include}}` markers are detected, invoke the
+> **skill-include-propagator** skill ("propagate includes") to batch-add them
+> across all affected skills. It knows the correct placement rules for each
+> shared block.
 
 After the trajectory report, run the consistency checker across all skills:
 
